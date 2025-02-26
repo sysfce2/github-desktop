@@ -66,7 +66,7 @@ interface IRepositoriesListProps {
   readonly externalEditorLabel?: string
 
   /** The label for the user's preferred shell. */
-  readonly shellLabel: string
+  readonly shellLabel?: string
 
   /** The callback to fire when the filter text has changed */
   readonly onFilterTextChanged: (text: string) => void
@@ -279,11 +279,20 @@ export class RepositoriesList extends React.Component<
         className="new-repository-button"
         onClick={this.onNewRepositoryButtonClick}
         ariaExpanded={this.state.newRepositoryMenuExpanded}
+        onKeyDown={this.onNewRepositoryButtonKeyDown}
       >
         Add
         <Octicon symbol={octicons.triangleDown} />
       </Button>
     )
+  }
+
+  private onNewRepositoryButtonKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>
+  ) => {
+    if (event.key === 'ArrowDown') {
+      this.onNewRepositoryButtonClick()
+    }
   }
 
   private renderNoItems = () => {
