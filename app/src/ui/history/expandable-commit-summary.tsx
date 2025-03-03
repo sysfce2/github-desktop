@@ -20,13 +20,14 @@ import { Button } from '../lib/button'
 import { Avatar } from '../lib/avatar'
 import { CopyButton } from '../copy-button'
 import { Account } from '../../models/account'
+import { Emoji } from '../../lib/emoji'
 
 interface IExpandableCommitSummaryProps {
   readonly repository: Repository
   readonly selectedCommits: ReadonlyArray<Commit>
   readonly shasInDiff: ReadonlyArray<string>
   readonly changesetData: IChangesetData
-  readonly emoji: Map<string, string>
+  readonly emoji: Map<string, Emoji>
 
   /**
    * Whether or not the commit body container should
@@ -38,8 +39,6 @@ interface IExpandableCommitSummaryProps {
   readonly isExpanded: boolean
 
   readonly onExpandChanged: (isExpanded: boolean) => void
-
-  readonly onDescriptionBottomChanged: (descriptionBottom: number) => void
 
   /** Called to highlight certain shas in the history */
   readonly onHighlightShas: (shasToHighlight: ReadonlyArray<string>) => void
@@ -145,7 +144,6 @@ export class ExpandableCommitSummary extends React.Component<
   private descriptionScrollViewRef: HTMLDivElement | null = null
   private readonly resizeObserver: ResizeObserver | null = null
   private updateOverflowTimeoutId: NodeJS.Immediate | null = null
-  private descriptionRef: HTMLDivElement | null = null
 
   private getCountCommitsNotInDiff = memoizeOne(
     (
@@ -191,12 +189,6 @@ export class ExpandableCommitSummary extends React.Component<
   }
 
   private onResized = () => {
-    if (this.descriptionRef) {
-      const descriptionBottom =
-        this.descriptionRef.getBoundingClientRect().bottom
-      this.props.onDescriptionBottomChanged(descriptionBottom)
-    }
-
     if (this.props.isExpanded) {
       return
     }
@@ -216,10 +208,6 @@ export class ExpandableCommitSummary extends React.Component<
         this.setState({ isOverflowed: false })
       }
     }
-  }
-
-  private onDescriptionRef = (ref: HTMLDivElement | null) => {
-    this.descriptionRef = ref
   }
 
   private renderExpander() {
@@ -317,7 +305,7 @@ export class ExpandableCommitSummary extends React.Component<
     })
 
     return (
-      <div className={className} ref={this.onDescriptionRef}>
+      <div className={className}>
         <div
           className="ecs-description-scroll-view"
           ref={this.onDescriptionScrollViewRef}
@@ -374,14 +362,13 @@ export class ExpandableCommitSummary extends React.Component<
     const commitsPluralized = excludedCommitsCount > 1 ? 'commits' : 'commit'
 
     return (
-      // eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
-      <div
-        className="commit-unreachable-info"
-        onMouseOver={this.onHighlightShasNotInDiff}
-        onMouseOut={this.onRemoveHighlightOfShas}
-      >
+      <div className="commit-unreachable-info">
         <Octicon symbol={octicons.info} />
-        <LinkButton onClick={this.showUnreachableCommits}>
+        <LinkButton
+          onClick={this.showUnreachableCommits}
+          onMouseOver={this.onHighlightShasNotInDiff}
+          onMouseOut={this.onRemoveHighlightOfShas}
+        >
           {excludedCommitsCount} unreachable {commitsPluralized}
         </LinkButton>{' '}
         not included.

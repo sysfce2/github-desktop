@@ -1,3 +1,8 @@
+/**
+ * This a11y linter is a false-positive as the element is a drop target
+ * facilitating our drag and drop functionality for reordering, squashing, and
+ * cherry-picking.
+ */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import * as React from 'react'
 import { Commit } from '../../models/commit'
@@ -19,12 +24,13 @@ import {
 import classNames from 'classnames'
 import { TooltippedContent } from '../lib/tooltipped-content'
 import { Account } from '../../models/account'
+import { Emoji } from '../../lib/emoji'
 
 interface ICommitProps {
   readonly gitHubRepository: GitHubRepository | null
   readonly commit: Commit
   readonly selectedCommits: ReadonlyArray<Commit>
-  readonly emoji: Map<string, string>
+  readonly emoji: Map<string, Emoji>
   readonly onRenderCommitDragElement?: (commit: Commit) => void
   readonly onRemoveDragElement?: () => void
   readonly onSquash?: (

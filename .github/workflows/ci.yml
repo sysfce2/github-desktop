@@ -38,7 +38,7 @@ on:
       APPLE_APPLICATION_CERT_PASSWORD:
 
 env:
-  NODE_VERSION: 18.16.1
+  NODE_VERSION: 20.18.1
 
 jobs:
   lint:
@@ -70,14 +70,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-13-xl-arm64, windows-2019]
+        os: [macos-13-xlarge, windows-2019]
         arch: [x64, arm64]
         include:
-          - os: macos-13-xl-arm64
+          - os: macos-13-xlarge
             friendlyName: macOS
           - os: windows-2019
             friendlyName: Windows
     timeout-minutes: 60
+    environment: ${{ inputs.environment }}
     env:
       RELEASE_CHANNEL: ${{ inputs.environment }}
     steps:
@@ -94,13 +95,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: yarn
-
-      # This step can be removed as soon as official Windows arm64 builds are published:
-      # https://github.com/nodejs/build/issues/2450#issuecomment-705853342
-      - name: Get NodeJS node-gyp lib for Windows arm64
-        if: ${{ matrix.os == 'windows-2019' && matrix.arch == 'arm64' }}
-        run: .\script\download-nodejs-win-arm64.ps1 ${{ env.NODE_VERSION }}
-
       - name: Install and build dependencies
         run: yarn
         env:

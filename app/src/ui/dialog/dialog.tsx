@@ -4,7 +4,8 @@ import { DialogHeader } from './header'
 import { createUniqueId, releaseUniqueId } from '../lib/id-pool'
 import { getTitleBarHeight } from '../window/title-bar'
 import { isTopMostDialog } from './is-top-most'
-import { isMacOSSonoma, isMacOSVentura } from '../../lib/get-os'
+import { isMacOSSonomaOrLater, isMacOSVentura } from '../../lib/get-os'
+import { sendDialogDidOpen } from '../main-process-proxy'
 
 /**
  * Class name used for elements that should be focused initially when a dialog
@@ -66,6 +67,16 @@ interface IDialogProps {
    * for when the default component doesn't cut it.
    */
   readonly title?: string | JSX.Element
+
+  /**
+   * Typically, a titleId is automatically generated based on the title
+   * attribute if it is a string. If it is not provided, we must assume the
+   * responsibility of providing a titleID that is used as the id of the h1 in
+   * the custom header and used in the aria attributes in this dialog component.
+   * By providing this titleID, the state.titleID will be set to this value and
+   * used in the aria attributes.
+   * */
+  readonly titleId?: string
 
   /**
    * An optional element to render to the right of the dialog title.
@@ -267,7 +278,7 @@ export class Dialog extends React.Component<DialogProps, IDialogState> {
 
   public constructor(props: DialogProps) {
     super(props)
-    this.state = { isAppearing: true }
+    this.state = { isAppearing: true, titleId: this.props.titleId }
 
     // Observe size changes and let codemirror know
     // when it needs to refresh.
@@ -345,6 +356,11 @@ export class Dialog extends React.Component<DialogProps, IDialogState> {
   }
 
   private updateTitleId() {
+    if (this.props.titleId) {
+      // Using the one provided that is used in a custom header
+      return
+    }
+
     if (this.state.titleId) {
       releaseUniqueId(this.state.titleId)
       this.setState({ titleId: undefined })
@@ -366,6 +382,7 @@ export class Dialog extends React.Component<DialogProps, IDialogState> {
   }
 
   public componentDidMount() {
+    sendDialogDidOpen()
     this.checkIsTopMostDialog(this.context.isTopMost)
   }
 
@@ -809,7 +826,7 @@ export class Dialog extends React.Component<DialogProps, IDialogState> {
       }
     }
 
-    if (isMacOSSonoma() && this.props.role !== 'alertdialog') {
+    if (isMacOSSonomaOrLater() && this.props.role !== 'alertdialog') {
       // macOS Sonoma introduced a regression in that: For role of 'dialog', the
       // aria-labelledby is not announced. However, if the dialog has a child
       // with a role of header (aka h* elemeent) it will be announced as long as
@@ -837,6 +854,10 @@ export class Dialog extends React.Component<DialogProps, IDialogState> {
     )
 
     return (
+      /**
+       * This a11y linter is a false-positive as the mousedown and keydown
+       * listeners facilitate expected behaviors around dismissing the dialog.
+       */
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
       <dialog
         ref={this.onDialogRef}
